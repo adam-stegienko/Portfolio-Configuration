@@ -1,0 +1,33 @@
+kube-prometheus-stack:
+  defaultRules:
+    rules:
+      etcd: false
+      kubeScheduler: false
+  kubeControllerManager:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelector:
+        matchLabels:
+          prometheus: monitoring
+  commonLabels:
+    prometheus: monitoring
+  grafana:
+    adminPassword: SecretPassword
+    service:
+      type: LoadBalancer
+    # ingress:
+    #   enabled: true
+    #   ingressClassName: nginx
+    #   extraPaths:
+    #     - path: /*
+    #       pathType: Prefix
+    #       backend:
+    #         service:
+    #           name: kube-prometheus-grafana
+    #           port:
+    #             number: 8000

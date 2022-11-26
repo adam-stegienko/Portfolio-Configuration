@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "sql-server-deploy.fullname" . }}
+  labels:
+    {{- include "sql-server-deploy.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "sql-server-deploy.fullname" . }}
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "sql-server-deploy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sql-server-deploy.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command:
+            - /bin/bash
+            - -c
+            - cp /var/opt/config/mssql.conf /var/opt/mssql/mssql.conf && cp /var/opt/config/initdb.sql /var/opt/mssql/initdb.sql && cp /var/opt/config/initdb.sh /var/opt/mssql/initdb.sh && cp /var/opt/config/entrypoint.sh /var/opt/mssql/entrypoint.sh && chmod +x /var/opt/mssql/initdb.sh && chmod +x /var/opt/mssql/entrypoint.sh && /var/opt/mssql/entrypoint.sh
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+           - containerPort: {{ .Values.containers.ports.containerPort}}
+          envFrom:
+            - secretRef:
+                name: mssql-secret
+          env:
+          - name: MSSQL_SA_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: digital-planner-external-secret
+                key: MSSQL_SA_PASSWORD
+          - name: MSSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: digital-planner-external-secret
+                key: MSSQL_USER
+          - name: MSSQL_DB
+            valueFrom:
+              secretKeyRef:
+                name: digital-planner-external-secret
+                key: MSSQL_DB
+          - name: MSSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: digital-planner-external-secret
+                key: MSSQL_PASSWORD 
+          volumeMounts:
+           - name: mssql
+             mountPath: "/var/opt/mssql"
+           - name: mssql-config-volume
+             mountPath: /var/opt/config
+      volumes:        
+      - name: mssql-config-volume
+        configMap:
+         name: mssql
+  volumeClaimTemplates:
+    - metadata:
+       name: mssql
+      spec:
+       accessModes:
+       - ReadWriteOnce
+       resources:
+        requests:
+         storage: 8Gi

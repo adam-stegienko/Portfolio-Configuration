@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digital-planner-deployment
+  labels:
+    app: digital-planner
+spec:
+  replicas: 7
+  selector:
+    matchLabels:
+      app: digital-planner
+  template:
+    metadata:
+      labels:
+        app: digital-planner
+    spec:
+      containers:
+      - name: digital-planner
+        image: digitalplanner.azurecr.io/digital_planner:2.1.1
+        ports:
+        - containerPort: 5000
+        envFrom:
+        - secretRef:
+            name: digital-planner-secret
+        env:
+        - name: MSSQL_SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: digital-planner-external-secret
+              key: MSSQL_SA_PASSWORD
+        - name: MSSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: digital-planner-external-secret
+              key: MSSQL_USER
+        - name: MSSQL_DB
+          valueFrom:
+            secretKeyRef:
+              name: digital-planner-external-secret
+              key: MSSQL_DB
+        - name: MSSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: digital-planner-external-secret
+              key: MSSQL_PASSWORD
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - digital-planner
+              topologyKey: kubernetes.azure.com/agentpool

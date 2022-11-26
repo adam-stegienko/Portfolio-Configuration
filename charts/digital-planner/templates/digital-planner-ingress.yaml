@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: digital-planner-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  # ingressClassName: nginx
+  tls:
+  - hosts:
+    - digital-planner.ddnsking.com
+    secretName: digital-planner-tls
+  rules:
+    - host: digital-planner.ddnsking.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: digital-planner-service
+              port:
+                number: 5000

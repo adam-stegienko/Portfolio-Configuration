@@ -1,0 +1,5 @@
+external-secrets:
+  serviceMonitor:
+    enabled: true
+  webhook:
+    create: true

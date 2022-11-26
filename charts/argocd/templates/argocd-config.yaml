@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: config-repo
+  namespace: default
+  labels:
+    app.kubernetes.io/name: config-repo
+    app.kubernetes.io/part-of: argocd
+    argocd.argoproj.io/secret-type: repository
+stringData:
+    name: argo
+    url: git@github.com:adam-stegienko/Portfolio-Configuration
+    type: git
+    # sshPrivateKey: |

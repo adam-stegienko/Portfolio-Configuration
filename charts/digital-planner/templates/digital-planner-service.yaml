@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: digital-planner-service
+  labels:
+    app: digital-planner
+spec:
+  type: ClusterIP
+  selector:
+    app: digital-planner
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000

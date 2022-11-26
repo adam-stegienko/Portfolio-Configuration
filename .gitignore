@@ -1,0 +1,7 @@
+close.sh
+cluster-config.sh
+init.sh
+start-terra.sh
+csi.yaml
+start.sh
+uninstall.sh

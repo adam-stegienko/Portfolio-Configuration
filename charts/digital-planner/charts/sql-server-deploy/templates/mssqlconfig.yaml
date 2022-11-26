@@ -1,0 +1,68 @@
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: mssql
+data:
+  mssql.conf: |
+    [EULA]
+    accepteula = Y
+    accepteulaml = Y
+    
+    [coredump]
+    captureminiandfull = true
+    coredumptype = full
+    
+    [hadr]
+    hadrenabled = 1
+    
+    [language]
+    lcid = 1033
+
+  initdb.sql: |
+    USE master;
+    GO
+
+    CREATE DATABASE [$(MSSQL_DB)];
+    GO
+
+    USE $(MSSQL_DB);
+    GO
+
+    CREATE LOGIN [$(MSSQL_USER)] WITH PASSWORD='$(MSSQL_PASSWORD)', DEFAULT_DATABASE=[$(MSSQL_DB)], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
+    GO
+
+    CREATE USER [$(MSSQL_USER)] FOR LOGIN $(MSSQL_USER);
+    GO
+
+    ALTER SERVER ROLE [dbcreator] ADD MEMBER $(MSSQL_USER);
+    GO
+
+    EXEC sp_addrolemember 'db_owner', '$(MSSQL_USER)';
+    GO
+
+  initdb.sh: |
+    #!bin/bash
+
+    echo "Creating MS SQL Login."
+
+    for i in {1..50};
+    do
+
+    /opt/mssql-tools/bin/sqlcmd -U $MSSQL_SA_USER -P $MSSQL_SA_PASSWORD -S localhost -i /var/opt/mssql/initdb.sql
+
+        if [ $? -eq 0 ]
+        then
+            echo "MS SQL Login created."
+            break
+        else
+            echo "..."
+            sleep 1
+        fi
+
+    done
+
+  entrypoint.sh: |
+    #!bin/bash
+
+    /opt/mssql/bin/sqlservr | /var/opt/mssql/initdb.sh
+  
